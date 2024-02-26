@@ -87,15 +87,6 @@ Clock *desenfileirar(FilaClock *fila) {
 void *produtor(void *valor) {
     srand(time(NULL));
     while (1) {
-        pthread_mutex_lock(&filaClock.mutex);
-
-        while (filaClock.count >= BUFFER_SIZE) {
-            printf("Fila cheia. Produtor dormindo...\n");
-            pthread_cond_wait(&filaClock.cond_cons, &filaClock.mutex);
-        }
-
-        pthread_mutex_unlock(&filaClock.mutex);
-
         Clock *relogio = malloc(sizeof(Clock));
         relogio->id = nextClockID++;
         for (int j = 0; j < BUFFER_SIZE; j++) {
@@ -114,15 +105,6 @@ void *produtor(void *valor) {
 
 void *consumidor(void *valor) {
     while (1) {
-        pthread_mutex_lock(&filaClock.mutex);
-
-        while (filaClock.count <= 0) {
-            printf("Fila vazia. Consumidor dormindo...\n");
-            pthread_cond_wait(&filaClock.cond_produ, &filaClock.mutex);
-        }
-
-        pthread_mutex_unlock(&filaClock.mutex);
-
         Clock *relogio = desenfileirar(&filaClock);
         executeTask(relogio, "Consumido");
         free(relogio);
@@ -138,15 +120,24 @@ int main(void) {
 
     ini_fila(&filaClock);
 
-    pthread_create(&produtor_thread, NULL, produtor, NULL);
-    pthread_create(&consumidor_thread, NULL, consumidor, NULL);
+// adicionei 3  threads consumidoras e produtoras 
 
-    pthread_join(produtor_thread, NULL);
-    pthread_join(consumidor_thread, NULL);
+    for (int i = 0; i < 3; i++) {
+        pthread_create(&produtor_threads[i], NULL, produtor, NULL);
+        pthread_create(&consumidor_threads[i], NULL, consumidor, NULL);
+    }
+
+    for (int i = 0; i < 3; i++) {
+        pthread_join(produtor_threads[i], NULL);
+        pthread_join(consumidor_threads[i], NULL);
+    }
 
     pthread_mutex_destroy(&filaClock.mutex);
     pthread_cond_destroy(&filaClock.cond_cons);
     pthread_cond_destroy(&filaClock.cond_produ);
+
+    return 0;
+}
 
     return 0;
 }
