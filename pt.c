@@ -116,28 +116,31 @@ void *consumidor(void *valor) {
 }
 
 int main(void) {
-    pthread_t produtor_thread, consumidor_thread;
+    pthread_t produtor_threads[3];
+    pthread_t consumidor_threads[3];
 
     ini_fila(&filaClock);
 
-// adicionei 3  threads consumidoras e produtoras 
-
+    // Criação das threads produtoras e consumidoras
     for (int i = 0; i < 3; i++) {
         pthread_create(&produtor_threads[i], NULL, produtor, NULL);
         pthread_create(&consumidor_threads[i], NULL, consumidor, NULL);
     }
 
+    // Aguarda o término das threads
     for (int i = 0; i < 3; i++) {
         pthread_join(produtor_threads[i], NULL);
         pthread_join(consumidor_threads[i], NULL);
     }
 
+    // Destruição dos mutexes e variáveis de condição
     pthread_mutex_destroy(&filaClock.mutex);
     pthread_cond_destroy(&filaClock.cond_cons);
     pthread_cond_destroy(&filaClock.cond_produ);
 
     return 0;
 }
+
 
     return 0;
 }
